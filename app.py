@@ -6,7 +6,7 @@ from PIL import Image
 import numpy as np
 from io import BytesIO
 import base64
-from model import CNNRNNModel
+from model import CNNLSTMModel
 import torchvision.transforms as transforms
 
 app = Flask(__name__)
@@ -19,14 +19,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 input_shape = (224, 224, 3)  # Image size (height, width, channels)
 num_classes = 2  # Binary classification
 cnn_out_features = 512  # Output features of the CNN (ResNet18)
-rnn_hidden_size = 64 # Hidden size for LSTM
+rnn_hidden_size = 128 # Hidden size for LSTM
 num_rnn_layers = 2  # Number of LSTM layers
 
 # Instantiate the model
-model = CNNRNNModel(num_classes=num_classes, cnn_out_features=cnn_out_features, rnn_hidden_size=rnn_hidden_size)
+model = CNNLSTMModel(num_classes=num_classes, rnn_hidden_size=rnn_hidden_size)
 current_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(current_dir, 'resnet18_rnn.pth')
-model.load_state_dict(torch.load(model_path, weights_only=True))
+model_path = os.path.join(current_dir, 'final_model_mobilenet_rnn_128_0.0001.pth')
+model.load_state_dict(torch.load(model_path, weights_only=True)['model_state_dict'])
 model.eval()
 
 transform = transforms.Compose([
@@ -57,7 +57,11 @@ def predict_class(preprocessed_image):
         classes = ["Low Potential Dysgraphia", "Potential Dysgraphia"]
     return classes[predicted], confidence
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
+
+@app.route('/diagnose', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -87,7 +91,7 @@ def upload_file():
                 'confidence': confidence.item(),
                 'image_data': encoded_string
             })
-    return render_template('upload.html')
+    return render_template('upload (1).html')
 
 if __name__ == '__main__':
     app.run(debug=True)
