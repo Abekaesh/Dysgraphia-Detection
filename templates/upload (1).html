@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload and Prediction</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="../static/upload.css" >
+</head>
+<body>
+    <div style="text-align: center; font-size: 45px;">
+        <p>  </p>
+    </div>
+    <div class="container">
+        <h1>Image Upload & Prediction</h1>
+        <p class="description">Upload an image and let our AI model analyze it to provide insights and predictions with high accuracy.</p>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required>
+            <button type="submit">Upload and Predict</button>
+        </form>
+        <div id="result"></div>
+        <div class="confidence-bar">
+            <div class="confidence-fill"></div>
+        </div>
+        <img id="imagePreview" src="" alt="Uploaded Image">
+    </div>
+
+    <div class="footer" style="text-align: center;">
+        <p>Powered by <a href="https://example.com" target="_blank">Your AI Model</a>. Designed for accurate and insightful predictions.</p>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#uploadForm').on('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                $.ajax({
+                    url: '/diagnose', // Backend endpoint for handling the file upload and prediction
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        $('#result').text('Predicted Class: ' + response.predicted_class);
+                        $('#imagePreview').attr('src', 'data:image/jpeg;base64,' + response.image_data).show();
+
+                        // Update confidence bar
+                        var confidencePercentage = (response.confidence * 100).toFixed(2);
+                        $('.confidence-fill').css('width', confidencePercentage + '%');
+                        $('#result').append('<br>Confidence: ' + confidencePercentage + '%');
+                    },
+                    error: function() {
+                        alert('An error occurred during the upload.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
